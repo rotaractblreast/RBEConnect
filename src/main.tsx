@@ -8,9 +8,9 @@ import "./index.css";
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/sw.js", { scope: "/" })
+      .register("/OneSignalSDKWorker.js", { scope: "/" })
       .then((reg) => {
-        console.log("[PWA] Unified ServiceWorker registered with scope:", reg.scope);
+        console.log("[PWA] Unified OneSignal ServiceWorker registered with scope:", reg.scope);
       })
       .catch((err) => {
         console.warn("[PWA] ServiceWorker registration error:", err);

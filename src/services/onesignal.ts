@@ -30,6 +30,7 @@ export function initOneSignal(appId: string): void {
         serviceWorkerPath: "OneSignalSDKWorker.js",
         serviceWorkerParam: { scope: "/" },
         allowLocalhostAsSecureOrigin: true,
+        autoResubscribe: true,
       });
 
       console.log("[OneSignal] Initialized successfully with App ID:", cleanId);
@@ -54,24 +55,27 @@ export function getNotificationPermission(): NotificationPermission {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (window.OneSignal && window.OneSignal.Notifications) {
-    try {
-      await window.OneSignal.Notifications.requestPermission();
-      return Notification.permission === "granted";
-    } catch (e) {
-      console.warn("[OneSignal] Permission request failed, trying native fallback:", e);
-    }
-  }
-
   if (!("Notification" in window)) {
     return false;
   }
 
   try {
+    // 1. Direct native browser permission request (prevents triggering unmanaged OneSignal slidedown popups)
     const perm = await Notification.requestPermission();
-    return perm === "granted";
+    if (perm === "granted") {
+      // 2. Register subscription with OneSignal
+      if (window.OneSignal && window.OneSignal.Notifications) {
+        try {
+          await window.OneSignal.Notifications.requestPermission();
+        } catch (e) {
+          // Ignore wrapper notice if native permission is already granted
+        }
+      }
+      return true;
+    }
+    return false;
   } catch (err) {
-    console.error("Native notification request failed:", err);
+    console.warn("[Notification] Permission request error:", err);
     return false;
   }
 }
